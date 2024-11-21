@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Upload</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #output {
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Image Upload Example</h1>
+  <input type="file" id="fileInput" accept="image/*">
+  <button id="uploadButton">Upload Image</button>
+  <div id="output"></div>
+
+  <script>
+    document.getElementById('uploadButton').addEventListener('click', async () => {
+      const fileInput = document.getElementById('fileInput');
+      const output = document.getElementById('output');
+      
+      if (!fileInput.files.length) {
+        output.textContent = "Please select an image file.";
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const filename = file.name;
+      const fileSize = file.size;
+
+      // Step 1: Send the first request
+      const firstRequestUrl = "https://d.kuku.lu/_server.php";
+      const firstRequestData = new URLSearchParams();
+      firstRequestData.append("action", "getUploadURL");
+      firstRequestData.append("upload_files", JSON.stringify({
+        0: { filename: filename, size: fileSize }
+      }));
+
+      try {
+        const firstResponse = await fetch(firstRequestUrl, {
+          method: "POST",
+          body: firstRequestData,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          }
+        });
+
+        if (!firstResponse.ok) {
+          output.textContent = `Error in first request: ${firstResponse.status}`;
+          return;
+        }
+
+        const firstResponseData = await firstResponse.json();
+        output.textContent = `First Request Successful: ${JSON.stringify(firstResponseData, null, 2)}`;
+
+        // Step 2: Send the second request
+        const serverInfo = firstResponseData.servers[0];
+        const putUrl = serverInfo.url;
+
+        const secondResponse = await fetch(putUrl, {
+          method: "PUT",
+          body: file
+        });
+
+        if (!secondResponse.ok) {
+          output.textContent += `\nError in second request: ${secondResponse.status}`;
+          return;
+        }
+
+        const secondResponseText = await secondResponse.text();
+        output.textContent += `\nSecond Request Successful: ${secondResponseText}`;
+      } catch (error) {
+        output.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>

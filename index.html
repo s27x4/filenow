@@ -13,6 +13,16 @@
       margin-top: 20px;
       white-space: pre-wrap;
     }
+    #downloadUrl {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #copyButton {
+      margin-top: 10px;
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -20,12 +30,20 @@
   <input type="file" id="fileInput" accept="image/*">
   <button id="uploadButton">Upload Image</button>
   <div id="output"></div>
+  <div id="downloadUrl"></div>
+  <button id="copyButton" style="display: none;">Copy Download URL</button>
 
   <script>
     document.getElementById('uploadButton').addEventListener('click', async () => {
       const fileInput = document.getElementById('fileInput');
       const output = document.getElementById('output');
+      const downloadUrlDiv = document.getElementById('downloadUrl');
+      const copyButton = document.getElementById('copyButton');
       
+      output.textContent = "";
+      downloadUrlDiv.textContent = "";
+      copyButton.style.display = "none";
+
       if (!fileInput.files.length) {
         output.textContent = "Please select an image file.";
         return;
@@ -76,6 +94,22 @@
 
         const secondResponseText = await secondResponse.text();
         output.textContent += `\nSecond Request Successful: ${secondResponseText}`;
+
+        // Extract and display download URL
+        const downloadUrl = putUrl.split("?")[0];
+        downloadUrlDiv.textContent = `Download URL: ${downloadUrl}`;
+        copyButton.style.display = "inline-block";
+
+        // Add event listener for copying the URL
+        copyButton.onclick = () => {
+          navigator.clipboard.writeText(downloadUrl)
+            .then(() => {
+              alert("Download URL copied to clipboard!");
+            })
+            .catch(err => {
+              alert("Failed to copy URL: " + err);
+            });
+        };
       } catch (error) {
         output.textContent = `Error: ${error.message}`;
       }
